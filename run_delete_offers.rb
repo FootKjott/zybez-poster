@@ -1,16 +1,6 @@
 require_relative 'zybez.rb'
 
-class Fixnum
-  def m
-    self * 1000000
-  end
-
-  def k
-    self * 1000
-  end
-end
-
-class Float
+class Numeric
   def m
     (self * 1000000).to_i
   end
