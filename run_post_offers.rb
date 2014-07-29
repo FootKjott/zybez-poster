@@ -41,7 +41,7 @@ ObjectSpace.define_finalizer(zyb, proc {
 old_config = read_config
 count = 0
 
-while true
+loop do
   if Time.now - File.mtime('config.rb') < 60 || count % 5 == 0
     begin
       config = read_config
