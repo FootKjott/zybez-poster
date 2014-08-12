@@ -1,35 +1,25 @@
 require 'io/console'
-require_relative 'zybez.rb'
+require_relative 'zybez'
 
-class Numeric
-  def m
-    (self * 1000000).to_i
-  end
-
-  def k
-    (self * 1000).to_i
-  end
+def Integer.each &block
+  Enumerator.new { |y|
+    i = 0
+    loop do
+      y << i
+      i += 1
+    end
+  }.each(&block)
 end
 
-def log message=''
-  puts "#{Time.now}: #{message}" 
-end
+old_config = read_config
 
-def read_config
-  eval(File.read('config.rb'))
-end
+zyb = Zybez.new old_config
 
-def explain_offer offer
-  offer.map { |e| (e.is_a?(String) ? "\"#{e}\"" : e) }.join ' '
-end
-
-zyb = Zybez.new
-
-ObjectSpace.define_finalizer(zyb, proc { 
+ObjectSpace.define_finalizer(zyb, proc {
   config = read_config
-  if config[:delete_offers_on_exit] 
+  if config[:delete_offers_on_exit]
     config[:offers].uniq { |o| o[2] }.each do |o|
-      log "Deleting #{explain_offer o}"
+      log "Deleting #{explain_offer}"
       until zyb.delete_offers(o[2]).empty? do end
     end
     zyb.delete_all_offers
@@ -38,10 +28,7 @@ ObjectSpace.define_finalizer(zyb, proc {
   end
 })
 
-old_config = read_config
-count = 0
-
-loop do
+Integer.each do |count|
   if Time.now - File.mtime('config.rb') < 60 || count % 5 == 0
     begin
       config = read_config
@@ -61,7 +48,7 @@ loop do
       items_posted = []
       config[:offers].each do |o|
         next if items_posted.include?(o[2]) # prevents posting buying and selling offer next to eachother
-        off = zyb.post_offer_if o[0], o[1], o[2], o[3], 
+        off = zyb.post_offer_if o[0], o[1], o[2], o[3],
           (o.length > 4 && o[4] ? config[:note_explicit] % o[4] : config[:note_default]),
           (o.length > 5 ? o[5] : config[:contact_default]), config[:repost_offer_if]
         if off
