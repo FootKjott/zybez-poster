@@ -25,18 +25,19 @@ class Browser
 
   def get url
     uri = URI(url)
-    res = @con[uri.host].get("#{uri.path}?#{uri.query}", @headers).response
-    set_cookies Browser.decode_cookies res['set-cookie'] if res['set-cookie']
-    return get res['Location'] if res['Location']
-    return res
+    follow_response @con[uri.host].get("#{uri.path}?#{uri.query}", @headers).response
   end
 
   def post url, data
     uri = URI(url)
-    res = @con[uri.host].post("#{uri.path}?#{uri.query}", Browser.hash_to_http_data(data), @headers).response
+    post_data = Browser.hash_to_http_data data
+    follow_response @con[uri.host].post("#{uri.path}?#{uri.query}", post_data, @headers).response
+  end
+
+  def follow_response res
     set_cookies Browser.decode_cookies res['set-cookie'] if res['set-cookie']
     return get res['Location'] if res['Location']
-    return res
+    res
   end
 
   def [](key)
@@ -62,8 +63,8 @@ class Browser
   end
 
   def self.hash_to_http_data hash
-    hash.map { |k, v| 
-      "#{k}=#{v}" 
+    hash.map { |k, v|
+      "#{k}=#{v}"
     }.join('&')
   end
 end
