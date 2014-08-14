@@ -1,17 +1,8 @@
 require 'io/console'
 require_relative 'zybez'
 
-def Integer.each &block
-  Enumerator.new { |y|
-    i = 0
-    loop do
-      y << i
-      i += 1
-    end
-  }.each(&block)
-end
-
 old_config = read_config
+config = old_config
 
 zyb = Zybez.new old_config
 
@@ -28,7 +19,9 @@ ObjectSpace.define_finalizer(zyb, proc {
   end
 })
 
-Integer.each do |count|
+count = 0
+
+while config[:loop_while].call
   if Time.now - File.mtime('config.rb') < 60 || count % 5 == 0
     begin
       config = read_config
@@ -47,7 +40,9 @@ Integer.each do |count|
 
       items_posted = []
       config[:offers].each do |o|
-        next if items_posted.include?(o[2]) # prevents posting buying and selling offer next to eachother
+        # prevents posting buying and selling offer next to eachother
+        next if items_posted.include?(o[2])
+
         off = zyb.post_offer_if o[0], o[1], o[2], o[3],
           (o.length > 4 && o[4] ? config[:note_explicit] % o[4] : config[:note_default]),
           (o.length > 5 ? o[5] : config[:contact_default]), config[:repost_offer_if]
